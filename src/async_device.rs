@@ -8,12 +8,7 @@ use defmt::{error, info};
 use embedded_hal_async::{delay::DelayNs, i2c::{self, Error}};
 use embedded_hal_async::i2c::I2c;
 
-
-
-impl<I2C, D> AsyncBmi323<I2C, D>
-where
-    D: DelayNs,
-{
+impl<I2C, D> AsyncBmi323<I2C, D> where D: DelayNs{
     /// Create a new BMI323 device instance
     ///
     /// # Arguments
@@ -31,11 +26,7 @@ where
     }
 }
 
-impl<I2C, D> AsyncBmi323<I2C, D>
-where
-    I2C: I2c,
-    D: DelayNs,
-{
+impl<I2C, D> AsyncBmi323<I2C, D> where I2C: I2c, D: DelayNs{
     /// Initialize the device
     pub async fn init(&mut self) -> Result<i8, I2C::Error> {
         let soft_reset_result = self.write_register_16bit(Register::CMD, Register::CMD_SOFT_RESET).await;
@@ -168,7 +159,7 @@ where
         let bytes = value.to_le_bytes();
         self.write_data(&[reg, bytes[0], bytes[1]]).await
     }
-
+ 
     async fn write_register(&mut self, register: u8, data: u8) -> Result<(), I2C::Error> {
         let payload: [u8; 2] = [register, data];
         self.i2c.write(self.address, &payload).await
@@ -213,7 +204,7 @@ where
                 return Ok(());
                 // return Err();
             }
-            self.delay.delay_ms(1);
+            self.delay.delay_ms(1).await;
             retries += 1;
         }
 
