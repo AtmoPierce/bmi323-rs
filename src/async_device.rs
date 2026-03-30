@@ -5,8 +5,32 @@ use crate::{
 };
 #[cfg(feature = "defmt")]
 use defmt::{error, info};
-use embedded_hal_async::{delay::DelayNs, i2c::{self, Error}};
+use embedded_hal_async::delay::DelayNs;
 use embedded_hal_async::i2c::I2c;
+
+#[cfg(feature = "defmt")]
+fn log_bmi_info(message: &'static str) {
+    info!("{}", message);
+}
+
+#[cfg(not(feature = "defmt"))]
+fn log_bmi_info(_message: &'static str) {}
+
+#[cfg(feature = "defmt")]
+fn log_bmi_register(label: &'static str, value: u8) {
+    info!("{}: {}", label, value);
+}
+
+#[cfg(not(feature = "defmt"))]
+fn log_bmi_register(_label: &'static str, _value: u8) {}
+
+#[cfg(feature = "defmt")]
+fn log_bmi_i2c_error(context: &'static str) {
+    error!("BMI323 I2C communication error during {}", context);
+}
+
+#[cfg(not(feature = "defmt"))]
+fn log_bmi_i2c_error(_context: &'static str) {}
 
 impl<I2C, D> AsyncBmi323<I2C, D> where D: DelayNs{
     /// Create a new BMI323 device instance
@@ -32,10 +56,11 @@ impl<I2C, D> AsyncBmi323<I2C, D> where I2C: I2c, D: DelayNs{
         let soft_reset_result = self.write_register_16bit(Register::CMD, Register::CMD_SOFT_RESET).await;
         match soft_reset_result{
             Ok(_)=>{
-                info!("Soft Reset Sent");
+                log_bmi_info("Soft Reset Sent");
             }
-            Err(i2c_error)=>{
-                error!("Could not send soft reset to BMI323: {}", self.address);
+            Err(i2c_error) => {
+                log_bmi_i2c_error("soft reset");
+                return Err(i2c_error);
             }
         }
 
@@ -44,7 +69,7 @@ impl<I2C, D> AsyncBmi323<I2C, D> where I2C: I2c, D: DelayNs{
         let status_result = self.read_register(0x01).await;
         match status_result{
             Ok(data)=>{
-                info!("Data: {}", data);
+                log_bmi_register("Status", data);
                 if (data & 0b0000_0001) != 0 {
                     result = -1;
                 }
@@ -53,14 +78,14 @@ impl<I2C, D> AsyncBmi323<I2C, D> where I2C: I2c, D: DelayNs{
                 }
             }
             Err(i2c_error)=>{
-                info!("ID Err: {}", i2c_error.kind());
+                log_bmi_i2c_error("status read");
                 return Err(i2c_error);
             }
         }
         let id_result = self.read_register(Register::CHIPID).await;
         match id_result{
             Ok(data)=>{
-                info!("ID: {}", data);
+                log_bmi_register("ID", data);
                 if data != Register::BMI323_CHIP_ID {
                     result = -1;
                     return Ok(result);
@@ -70,7 +95,7 @@ impl<I2C, D> AsyncBmi323<I2C, D> where I2C: I2c, D: DelayNs{
                 }                               
             }
             Err(i2c_error)=>{
-                info!("ID Err: {}", i2c_error.kind());
+                log_bmi_i2c_error("chip id read");
                 return Err(i2c_error);
             }            
         }

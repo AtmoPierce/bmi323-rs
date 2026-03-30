@@ -65,6 +65,7 @@ where
         let result = self.read_register(Register::CHIPID)?;
         if result != Register::BMI323_CHIP_ID {
             return Err(Error::InvalidDevice);
+            
         }
 
         Ok(())
@@ -140,13 +141,13 @@ where
     /// Read the LSB for the accelerometer and return the scaled value as mps2
     pub fn read_accel_data_scaled(&mut self) -> Result<Sensor3DDataScaled, Error<E>> {
         let raw_data = self.read_accel_data()?;
-        Ok(raw_data.to_mps2(self.accel_range.to_g())) // Assuming 16-bit width
+        raw_data.to_mps2(self.accel_range.to_g())? // Assuming 16-bit width
     }
 
     /// Read the LSB for the gyroscope and return the scaled value as dps
     pub fn read_gyro_data_scaled(&mut self) -> Result<Sensor3DDataScaled, Error<E>> {
-        let raw_data = self.read_gyro_data()?;
-        Ok(raw_data.to_dps(self.gyro_range.to_dps())) // Assuming 16-bit width
+        let raw_data_response = self.read_gyro_data()?;
+        raw_data.to_dps(self.gyro_range.to_dps())? // Assuming 16-bit width
     }
 
     fn write_register_16bit(&mut self, reg: u8, value: u16) -> Result<(), Error<E>> {
