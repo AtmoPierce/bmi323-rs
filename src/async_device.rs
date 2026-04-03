@@ -170,14 +170,16 @@ impl<I2C, D> AsyncBmi323<I2C, D> where I2C: I2c, D: DelayNs{
 
     /// Read the LSB for the accelerometer and return the scaled value as mps2
     pub async fn read_accel_data_scaled(&mut self) -> Result<Sensor3DDataScaled, I2C::Error> {
-        let raw_data = self.read_accel_data().await?;
-        Ok(raw_data.to_mps2(self.accel_range.to_g())) // Assuming 16-bit width
+        self.read_accel_data()
+            .await
+            .map(|raw_data| raw_data.to_mps2(self.accel_range.to_g())) // Assuming 16-bit width
     }
 
     /// Read the LSB for the gyroscope and return the scaled value as dps
     pub async fn read_gyro_data_scaled(&mut self) -> Result<Sensor3DDataScaled, I2C::Error> {
-        let raw_data = self.read_gyro_data().await?;
-        Ok(raw_data.to_dps(self.gyro_range.to_dps())) // Assuming 16-bit width
+        self.read_gyro_data()
+            .await
+            .map(|raw_data| raw_data.to_dps(self.gyro_range.to_dps())) // Assuming 16-bit width
     }
 
     async fn write_register_16bit(&mut self, reg: u8, value: u16) -> Result<(), I2C::Error> {
