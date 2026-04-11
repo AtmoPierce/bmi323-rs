@@ -6,11 +6,9 @@ pub mod device;
 #[cfg(feature = "async")]
 pub mod async_interface;
 #[cfg(feature = "async")]
-pub use async_interface::*;
-#[cfg(feature = "async")]
 pub mod async_device;
 #[cfg(feature = "async")]
-pub use embedded_hal_async::i2c::*;
+pub use async_interface::*;
 
 /// BMI323 driver for Rust
 ///
@@ -40,10 +38,9 @@ pub struct Bmi323<DI, D> {
     gyro_range: GyroscopeRange,
 }
 #[cfg(feature = "async")]
-pub struct AsyncBmi323<I2C, Delay>{
-    /// Communication interface (I2C)
-    i2c: I2C,
-    address: u8,
+pub struct AsyncBmi323<DI, Delay>{
+    /// Communication interface (I2C or SPI)
+    iface: DI,
     delay: Delay,
     /// Current accelerometer range
     accel_range: AccelerometerRange,
